@@ -1,0 +1,164 @@
+<?php
+
+/* 
+Plugin Name: Tenders
+Description: This is Plugin to Create Tenders
+version: 1.0
+Author: Aditya Tiwari
+*/
+
+
+add_action('init','wp_register_tenders');
+function wp_register_tenders(){
+
+$labels = array(
+    'name' => __('Tenders'),
+    'singular_name' => __('Tender'),
+    'menu_name' => __('Tenders'),
+    'name_admin_bar' => __('Tender'),
+    'add_new' => __('Add New'),
+    'add_new_item' => __('Add New Tender'),
+    'new_item' => __('New Tender'),
+    'edit_item' => __('Edit Tender'),
+    'view_item' => __('View Tender'),
+    'all_items' => __('All Tenders'),
+    'search_items' => __('Search Tenders'),
+    'parent_item_colon' => __('Parent Tenders:'),
+    'not_found' => __('No Tenders found.'),
+    'not_found_in_trash' => __('No Tenders found in Trash.')
+);
+
+$args = array(
+    'labels' => $labels,
+    'description' => __('Description.'),
+    'public' => true,
+    'publicly_queryable' => true,
+    'show_ui' => true,
+    'show_in_menu' => true,
+    'query_var' => true,
+    'rewrite' => array('slug' => 'tender'),
+    'capability_type' => 'post',
+    'has_archive' => true,
+    'hierarchical' => false,
+    'menu_position' => null,
+    'supports' => array('title', 'author')
+);
+
+register_post_type('tender', $args);
+
+}
+
+function wp_register_tenders_metabox()
+{
+    add_meta_box("tender-id", "Tender Details", "wp_register_tenders_call", "tender", "side", "high");
+
+}
+
+add_action("add_meta_boxes", "wp_register_tenders_metabox");
+
+
+
+function wp_register_tenders_call($post) {
+?>
+<p>
+    <label>Tender Id:</label>
+    <?php $name = get_post_meta($post->ID, "wp_tender_id", true) ?>
+    <input type="text" value="<?php echo $name; ?>" name="wp_tender_id" placeholder="Id"/>
+</p>
+
+<p>
+    <label>Closing Date:</label>
+    <?php $name = get_post_meta($post->ID, "wp_tender_closing_date", true) ?>
+    <input type="date" value="<?php echo $name; ?>" name="wp_tender_closing_date" placeholder="Date"/>
+</p>
+
+<p>
+    <label>Corrigendum:</label>
+    <?php $name = get_post_meta($post->ID, "wp_tender_corrigendum", true) ?>
+    <!-- <input type="textarea" value="<?php //echo $name; ?>" name="wp_tender_corrigendum" placeholder="Corrigendum"/> -->
+    <input type="file" value="<?php echo $name; ?>" name="wp_tender_corrigendum" placeholder="Corrigendum"/>
+
+</p>
+
+<p>
+    <label>Tender File:</label>
+    <?php $name = get_post_meta($post->ID, "wp_tender_file", true) ?>
+    <input type="file" value="<?php echo $name; ?>" name="wp_tender_file" placeholder="Tender File"/>
+</p>
+
+
+<?php
+}
+function wp_register_tenders_save_values($post_id, $post) {
+
+    $wp_tender_id = isset($_POST['wp_tender_id']) ? $_POST['wp_tender_id'] : "";
+    $wp_tender_closing_date = isset($_POST['wp_tender_closing_date']) ? $_POST['wp_tender_closing_date'] : "";
+    $wp_tender_corrigendum = isset($_POST['wp_tender_corrigendum']) ? $_POST['wp_tender_corrigendum'] : "";
+    $wp_tender_file = isset($_POST['wp_tender_file']) ? $_POST['wp_tender_file'] : "";
+
+    update_post_meta($post_id, "wp_tender_id", $wp_tender_id);
+    update_post_meta($post_id, "wp_tender_closing_date", $wp_tender_closing_date);
+    update_post_meta($post_id, "wp_tender_corrigendum", $wp_tender_corrigendum);
+    update_post_meta($post_id, "wp_tender_file", $wp_tender_file);
+
+}
+
+add_action("save_post", "wp_register_tenders_save_values", 10, 2);
+
+function wp_register_tenders_columns($columns) {
+
+    $columns = array(
+        "cb" => "<input type='checkbox'/>",
+        "tender_id" => 'Tenders Id',
+        "title" => "Tenders Title",
+        "date" => "Publishing Date",
+        "close_date" => "Closing Date",
+        "corrigendum" => "Corrigendum",
+        "file" => "Download File"
+
+    );
+
+    return $columns;
+}
+
+add_action("manage_tender_posts_columns", "wp_register_tenders_columns");
+
+function wp_register_tenders_columns_data($column, $post_id) {
+
+    switch ($column) {
+
+        case 'tender_id':
+            $tender_id = get_post_meta($post_id, "wp_tender_id", true);
+            echo $tender_id;
+            break;
+        case 'close_date':
+            $close_date = get_post_meta($post_id, "wp_tender_closing_date", true);
+            echo $close_date;
+            break;
+        case 'corrigendum':
+            $corrigendum = get_post_meta($post_id, "wp_tender_corrigendum", true);
+            echo $corrigendum;
+            break;
+        case 'file':
+            $file = get_post_meta($post_id, "wp_tender_file", true);
+            echo $file;
+            break;
+
+            
+    }
+}
+
+add_action("manage_tender_posts_custom_column", "wp_register_tenders_columns_data", 10, 2);
+
+add_filter("manage_edit-tender_sortable_columns", "wpl_owt_cpt_sortable_columns");
+
+function wpl_owt_cpt_sortable_columns($columns) {
+
+    $columns["tender_id"] = "id";
+    $columns["close_date"] = "date-closed";
+    $columns["corrigendum"] = "crgndm";
+    $columns["file"] = "attachment";
+
+
+    return $columns;
+}
